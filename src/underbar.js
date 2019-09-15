@@ -420,6 +420,16 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    if(iterator.constructor === String) {
+      var iter = iterator;
+      iterator = function(item) {
+        return item[iter];
+      }
+    }
+
+    return collection.sort(function(a, b) {
+      return iterator(a) - iterator(b);
+    });
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -428,6 +438,25 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var res = [];
+    var temp = [];
+    _.each(arguments, function(item) {
+      temp.push(item);
+    });
+    var tempUnsorted = temp.slice();
+
+    _.sortBy(temp, 'length');
+
+    var maxLen = temp[temp.length-1].length;
+
+    for(var i=0; i<maxLen; i++) {
+      var subRes = [];
+      for(var j=0; j<temp.length; j++) {
+        subRes.push(tempUnsorted[j][i]);
+      }
+      res.push(subRes);
+    }
+    return res;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -435,16 +464,45 @@
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    // need to use recursion
+    return _.reduce(nestedArray, function(acc, item) {
+      return acc.concat(Array.isArray(item) ? _.flatten(item) : [item]);
+    }, []);
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    var args = [];
+    var argSet = [];
+    var visited = new Set([]);
+    _.each(arguments, function(arg) {
+      args.push(arg);
+      argSet.push(new Set(arg));
+    });
+    args = _.flatten(args);
+    var res = [];
+    _.each(args, function(item) {
+      if(!visited.has(item) && _.every(argSet, function(subSet) { return subSet.has(item); })) {
+        res.push(item);
+        visited.add(item)
+      }
+    });
+    return res;
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var res = arguments[0];
+    var argSet = [];
+    for(var i=1; i<arguments.length; i++) {
+      var tempSet = new Set(arguments[i]);
+      _.each(res, function(item, index) {
+        if(tempSet.has(item)) res.splice(index, 1);
+      });
+    }
+    return res;
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
@@ -453,5 +511,6 @@
   //
   // Note: This is difficult! It may take a while to implement.
   _.throttle = function(func, wait) {
+
   };
 }());
