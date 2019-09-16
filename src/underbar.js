@@ -511,6 +511,17 @@
   //
   // Note: This is difficult! It may take a while to implement.
   _.throttle = function(func, wait) {
-
+    var canBeCalled = true;
+    return function() {
+      if(canBeCalled) {
+        func.apply(this, arguments);
+        canBeCalled = false;
+        (function(wait) {
+          setTimeout(function() {
+            canBeCalled = true;
+          }, wait);
+        })(wait);
+      }
+    };
   };
 }());
